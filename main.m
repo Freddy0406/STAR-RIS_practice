@@ -2,6 +2,7 @@ clc;
 clear;
 close all;
 
+
 %% Configuration
 wave_length = 1;
 d_0 = 20;
@@ -14,7 +15,7 @@ SNR_linear = 10^(SNR/10);
 % BS, RIS configuration
 [loc_RIS,N,dH,element_size] = configRIS(wave_length);
 [loc_BS,M,co_bandwidth,co_time] = configBS;
-[loc_TUE1,loc_TUE2,loc_RUE1,loc_RUE2,velocity] = configUsers(loc_RIS,d_0);
+[loc_TUE1,loc_TUE2,loc_RUE1,loc_RUE2] = configUsers(loc_RIS,d_0);
 tao_c = co_bandwidth * co_time;         % tao_c
 tao = K;                                % tao (Must >= K)
 
@@ -35,7 +36,7 @@ rho_linear = 10^((rho_dBm)/10)*(10^-3);
 %% Channel pathloss
 
 % Path loss exponent
-PLE = -2;
+PLE = -1;
 
 % BS to RIS pathloss
 [pathloss_BS2RIS] = pathloss_cal(loc_BS,loc_RIS,element_size,PLE);
@@ -112,7 +113,7 @@ end
 % R_RIS = 10 * R_RIS;
 
 %% PGAM initial parameters
-init_steps = 10000;            % Initial step
+init_steps = 100;            % Initial step
 kappa = 0.95;                % Adjust step
 epsilon = 10^-5;            % Stop criterion
 max_iter = 200;
@@ -273,7 +274,6 @@ while true  % Outer loop
 
     %% 計算此次(第n次)之sum_SE
     [sum_SE(iter_n)] = f_function(prev.Rk,prev.Psi,K,SNR_linear);
-    sum_SE(iter_n) = ((tao_c-tao)/tao_c) * sum_SE(iter_n);
     fprintf('Current SE: %d\n',sum_SE(iter_n))
     %% PGAM
     % inner loop start
@@ -290,7 +290,6 @@ while true  % Outer loop
         Q_func = sum_SE(iter_n) + 2*real(nabla_theta_f'*(proj_theta-prev.theta))-(1/step_len)*norm(proj_theta-prev.theta)^2+...
             (nabla_beta_f'*(proj_beta-prev.beta))-(1/step_len)*norm(proj_beta-prev.beta)^2;
         [new_f_func] = f_function(new_Rk,new_Psi,K,SNR_linear);
-        new_f_func = ((tao_c-tao)/tao_c) * new_f_func;
 
         if(new_f_func<=Q_func)
             step_len = step_len*kappa;
@@ -321,3 +320,6 @@ while true  % Outer loop
         iter_n = iter_n + 1;
     end
 end
+
+
+
